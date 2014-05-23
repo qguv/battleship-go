@@ -14,7 +14,7 @@ func randomBool() bool {
 	return rand.Intn(2) == 0
 }
 
-func makeShips(d dimensions, generics []ship, owner player) []ship {
+func makeScatteredField(d dimensions, generics []ship, owner player) field {
 	ships := make([]ship, len(generics))
 	for shipI, s := range generics {
 		var horizontal bool
@@ -54,10 +54,14 @@ func makeShips(d dimensions, generics []ship, owner player) []ship {
 			s.spaces = coords
 			break // TODO: make less horrendous
 		}
-		s.owner = adversary
+		s.owner = owner
 		ships[shipI] = s
 	}
-	return ships
+	return field{
+		dimensions: d,
+		ships:      ships,
+		misses:     []coord{},
+	}
 }
 
 func alphabetPosition(s string) (int, error) {
@@ -98,21 +102,16 @@ func main() {
 
 	genericShips := canonicalBattleship()
 
-	adversaryShips := makeShips(dim, genericShips, adversary)
-	// TODO: Let humans choose
-	humanShips := makeShips(dim, genericShips, human)
+	attackField := makeScatteredField(dim, genericShips, adversary)
+	defendField := makeScatteredField(dim, genericShips, human)
 
-	field := field{
-		dimensions: dim,
-		ships:      append(adversaryShips, humanShips...),
-		misses:     []coord{},
-	}
-
-	winner := field.winner()
-	for winner == nobody {
+	for attackField.shipsLeft() && defendField.shipsLeft() {
 		// game loop
 	}
-	if winner == human {
+
+	if defendField.shipsLeft() {
 		fmt.Println("You've won! Congratulations.")
+	} else if attackField.shipsLeft() {
+		fmt.Println("You've lost!")
 	}
 }

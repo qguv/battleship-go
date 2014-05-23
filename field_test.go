@@ -2,12 +2,6 @@ package main
 
 import "testing"
 
-func TestSanity(t *testing.T) {
-	// this test intentionally left blank
-	// it should always pass
-	// if it doesn't, we have an environment issue
-}
-
 func TestCoordDimensions(t *testing.T) {
 	origin := coord{0, 0}
 
@@ -149,139 +143,45 @@ func TestShipIsDestroyed(t *testing.T) {
 	}
 }
 
-func TestClearWinner(t *testing.T) {
-	dims := dimensions{2, 5}
-	ships := []ship{
-		ship{
-			name:   "Enemy Boat (Wasted)",
-			length: 2,
-			spaces: []coord{
-				coord{0, 0},
-				coord{0, 1},
+func TestShipsLeft(t *testing.T) {
+	allDestroyed := field{
+		dimensions: dimensions{2, 2},
+		misses:     []coord{},
+		ships: []ship{
+			ship{
+				name:   "Baddie",
+				length: 1,
+				spaces: []coord{
+					coord{1, 1},
+				},
+				holes: []coord{
+					coord{1, 1},
+				},
+				owner: adversary,
 			},
-			holes: []coord{
-				coord{0, 0},
-				coord{0, 1},
-			},
-			owner: adversary,
-		},
-		ship{
-			name:   "Enemy Ship (Wasted)",
-			length: 3,
-			spaces: []coord{
-				coord{1, 2},
-				coord{1, 3},
-				coord{1, 4},
-			},
-			holes: []coord{
-				coord{1, 2},
-				coord{1, 3},
-				coord{1, 4},
-			},
-			owner: adversary,
-		},
-		ship{
-			name:   "Human Boat (Wasted)",
-			length: 2,
-			spaces: []coord{
-				coord{0, 3},
-				coord{0, 4},
-			},
-			holes: []coord{
-				coord{0, 3},
-				coord{0, 4},
-			},
-			owner: human,
-		},
-		ship{
-			name:   "Human Boat (Damaged)",
-			length: 2,
-			spaces: []coord{
-				coord{1, 0},
-				coord{1, 1},
-			},
-			holes: []coord{
-				coord{1, 0},
-			},
-			owner: human,
 		},
 	}
-	var misses []coord
-	f := field{
-		dimensions: dims,
-		misses:     misses,
-		ships:      ships,
+	if allDestroyed.shipsLeft() {
+		t.Error("shipsLeft reporting remaining ships in a destroyed field")
 	}
-	if f.winner() != human {
-		t.Fatal("winner method on field where human has destroyed all adversary vessels does not declare a human winner")
-	}
-}
 
-func TestNoWinner(t *testing.T) {
-	dims := dimensions{2, 5}
-	ships := []ship{
-		ship{
-			name:   "Enemy Boat (Wasted)",
-			length: 2,
-			spaces: []coord{
-				coord{0, 0},
-				coord{0, 1},
+	stillKicking := field{
+		dimensions: dimensions{2, 2},
+		misses:     []coord{},
+		ships: []ship{
+			ship{
+				name:   "Baddie",
+				length: 1,
+				spaces: []coord{
+					coord{1, 1},
+				},
+				holes: []coord{},
+				owner: adversary,
 			},
-			holes: []coord{
-				coord{0, 0},
-				coord{0, 1},
-			},
-			owner: adversary,
-		},
-		ship{
-			name:   "Enemy Ship (Damaged)",
-			length: 3,
-			spaces: []coord{
-				coord{1, 2},
-				coord{1, 3},
-				coord{1, 4},
-			},
-			holes: []coord{
-				coord{1, 2},
-				coord{1, 3},
-			},
-			owner: adversary,
-		},
-		ship{
-			name:   "Human Boat (Wasted)",
-			length: 2,
-			spaces: []coord{
-				coord{0, 3},
-				coord{0, 4},
-			},
-			holes: []coord{
-				coord{0, 3},
-				coord{0, 4},
-			},
-			owner: human,
-		},
-		ship{
-			name:   "Human Boat (Damaged)",
-			length: 2,
-			spaces: []coord{
-				coord{1, 0},
-				coord{1, 1},
-			},
-			holes: []coord{
-				coord{1, 0},
-			},
-			owner: human,
 		},
 	}
-	var misses []coord
-	f := field{
-		dimensions: dims,
-		misses:     misses,
-		ships:      ships,
-	}
-	winner := f.winner()
-	if f.winner() != nobody {
-		t.Fatalf("winner method on field without clear winner does not declare 'nobody' winner, instead declares %s winner", winner.String())
+	if !stillKicking.shipsLeft() {
+		t.Error("shipsLeft reporting no remaining ships in an active field")
 	}
 }
 

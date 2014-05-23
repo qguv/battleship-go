@@ -90,21 +90,13 @@ type field struct {
 	misses     []coord
 }
 
-func (f field) winner() player {
-	survivor := nobody
+func (f field) shipsLeft() bool {
 	for _, s := range f.ships {
-		// If there is an undestroyed ship on the board, its owner has not lost.
 		if !s.isDestroyed() {
-			if survivor == nobody {
-				survivor = s.owner
-			} else {
-				// If there's already a survivor, both opponents are alive.
-				// If both opponents are alive, nobody has won.
-				return nobody
-			}
+			return true
 		}
 	}
-	return survivor
+	return false
 }
 
 func (c coord) on(f field) bool {

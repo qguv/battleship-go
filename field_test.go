@@ -2,6 +2,12 @@ package main
 
 import "testing"
 
+func TestSanity(t *testing.T) {
+	// this test intentionally left blank
+	// it should always pass
+	// if it doesn't, we have an environment issue
+}
+
 func TestCoordDimensions(t *testing.T) {
 	origin := coord{0, 0}
 

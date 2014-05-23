@@ -51,6 +51,20 @@ const (
 	everybody
 )
 
+func (p player) String() (s string) {
+	switch p {
+	case nobody:
+		s = "nobody"
+	case human:
+		s = "human"
+	case adversary:
+		s = "adversary"
+	case everybody:
+		s = "everybody"
+	}
+	return s
+}
+
 type ship struct {
 	name   string
 	length int
@@ -74,13 +88,13 @@ func (f field) winner() player {
 	for _, s := range f.ships {
 		// If there is an undestroyed ship on the board, its owner has not lost.
 		if !s.isDestroyed() {
-			if survivor < s.owner {
-				survivor = survivor + s.owner
+			if survivor == nobody {
+				survivor = s.owner
+			} else {
+				// If there's already a survivor, both opponents are alive.
+				// If both opponents are alive, nobody has won.
+				return nobody
 			}
-		}
-		// If both opponents are alive, nobody has won.
-		if survivor >= everybody {
-			return nobody
 		}
 	}
 	return survivor
@@ -94,6 +108,7 @@ func (f field) shoot(aim coord) (bool, *ship) {
 	for _, s := range f.ships {
 		for _, c := range s.spaces {
 			if c == aim {
+				s.holes = append(s.holes, aim)
 				return true, &s
 			}
 		}

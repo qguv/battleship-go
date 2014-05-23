@@ -95,9 +95,7 @@ func move(f *field) string {
 	aim := coord{row, column}
 	hit, hitShip := f.shoot(aim)
 	if hit {
-		hitShip.holes = append(hitShip.holes, aim)
 		return fmt.Sprintln("you hit a", hitShip.name)
-		// FIXME: pointers!!!!!!!!!!! TODO
 	} else {
 		return "Miss!"
 	}

@@ -96,8 +96,8 @@ func TestShipIsDestroyed(t *testing.T) {
 			coord{2, 5},
 			coord{2, 6},
 		},
-		holes:  make([]coord, 4),
-		owner:  human,
+		holes: make([]coord, 4),
+		owner: human,
 	}
 	damaged := ship{
 		name:   "An Experienced Ship",
@@ -113,7 +113,7 @@ func TestShipIsDestroyed(t *testing.T) {
 			coord{2, 5},
 			coord{2, 6},
 		},
-		owner:  human,
+		owner: human,
 	}
 	destroyed := ship{
 		name:   "A Wasted Ship",
@@ -130,7 +130,7 @@ func TestShipIsDestroyed(t *testing.T) {
 			coord{2, 5},
 			coord{2, 6},
 		},
-		owner:  human,
+		owner: human,
 	}
 	if prestine.isDestroyed() {
 		t.Error("a prestine ship's isDestroyed method erroneously reports its demise")
@@ -143,6 +143,184 @@ func TestShipIsDestroyed(t *testing.T) {
 	}
 }
 
-func TestWinner(t *testing.T) {
-	//TODO
+func TestClearWinner(t *testing.T) {
+	dims := dimensions{2, 5}
+	ships := []ship{
+		ship{
+			name:   "Enemy Boat (Wasted)",
+			length: 2,
+			spaces: []coord{
+				coord{0, 0},
+				coord{0, 1},
+			},
+			holes: []coord{
+				coord{0, 0},
+				coord{0, 1},
+			},
+			owner: adversary,
+		},
+		ship{
+			name:   "Enemy Ship (Wasted)",
+			length: 3,
+			spaces: []coord{
+				coord{1, 2},
+				coord{1, 3},
+				coord{1, 4},
+			},
+			holes: []coord{
+				coord{1, 2},
+				coord{1, 3},
+				coord{1, 4},
+			},
+			owner: adversary,
+		},
+		ship{
+			name:   "Human Boat (Wasted)",
+			length: 2,
+			spaces: []coord{
+				coord{0, 3},
+				coord{0, 4},
+			},
+			holes: []coord{
+				coord{0, 3},
+				coord{0, 4},
+			},
+			owner: human,
+		},
+		ship{
+			name:   "Human Boat (Damaged)",
+			length: 2,
+			spaces: []coord{
+				coord{1, 0},
+				coord{1, 1},
+			},
+			holes: []coord{
+				coord{1, 0},
+			},
+			owner: human,
+		},
+	}
+	var misses []coord
+	f := field{
+		dimensions: dims,
+		misses:     misses,
+		ships:      ships,
+	}
+	if f.winner() != human {
+		t.Fatal("winner method on field where human has destroyed all adversary vessels does not declare a human winner")
+	}
+}
+
+func TestNoWinner(t *testing.T) {
+	dims := dimensions{2, 5}
+	ships := []ship{
+		ship{
+			name:   "Enemy Boat (Wasted)",
+			length: 2,
+			spaces: []coord{
+				coord{0, 0},
+				coord{0, 1},
+			},
+			holes: []coord{
+				coord{0, 0},
+				coord{0, 1},
+			},
+			owner: adversary,
+		},
+		ship{
+			name:   "Enemy Ship (Damaged)",
+			length: 3,
+			spaces: []coord{
+				coord{1, 2},
+				coord{1, 3},
+				coord{1, 4},
+			},
+			holes: []coord{
+				coord{1, 2},
+				coord{1, 3},
+			},
+			owner: adversary,
+		},
+		ship{
+			name:   "Human Boat (Wasted)",
+			length: 2,
+			spaces: []coord{
+				coord{0, 3},
+				coord{0, 4},
+			},
+			holes: []coord{
+				coord{0, 3},
+				coord{0, 4},
+			},
+			owner: human,
+		},
+		ship{
+			name:   "Human Boat (Damaged)",
+			length: 2,
+			spaces: []coord{
+				coord{1, 0},
+				coord{1, 1},
+			},
+			holes: []coord{
+				coord{1, 0},
+			},
+			owner: human,
+		},
+	}
+	var misses []coord
+	f := field{
+		dimensions: dims,
+		misses:     misses,
+		ships:      ships,
+	}
+	winner := f.winner()
+	if f.winner() != nobody {
+		t.Fatalf("winner method on field without clear winner does not declare 'nobody' winner, instead declares %s winner", winner.String())
+	}
+}
+
+func TestShoot(t *testing.T) {
+	dims := dimensions{3, 3}
+	ships := []ship{
+		ship{
+			name:   "Enemy Sailboat",
+			length: 1,
+			spaces: []coord{
+				coord{1, 1},
+			},
+			holes: []coord{},
+			owner: adversary,
+		},
+		ship{
+			name:   "Our Sailboat",
+			length: 1,
+			spaces: []coord{
+				coord{1, 2},
+			},
+			holes: []coord{},
+			owner: human,
+		},
+	}
+	var misses []coord
+	f := field{
+		dimensions: dims,
+		misses:     misses,
+		ships:      ships,
+	}
+
+	badHit, _ := f.shoot(coord{0, 1})
+	if badHit {
+		t.Error("shooting an unoccupied coordinate in a field resulted in a hit")
+	}
+
+	goodHit, ship := f.shoot(coord{1, 1})
+	if !goodHit {
+		t.Error("shooting an occupied coordinate in a field resulted in a miss")
+	}
+	if ship.name != f.ships[0].name {
+		t.Error("shooting an occupied coordinate in a field resulted in the wrong ship being returned")
+	}
+	if !ship.isDestroyed() {
+		t.Error("shooting a ship completely did not result in its destruction")
+	}
 }

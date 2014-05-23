@@ -324,3 +324,27 @@ func TestShoot(t *testing.T) {
 		t.Error("shooting a ship completely did not result in its destruction")
 	}
 }
+
+func TestOccupied(t *testing.T) {
+	ships := []ship{
+		ship{
+			name:   "Tyrone",
+			length: 1,
+			spaces: []coord{
+				coord{0, 0},
+			},
+			holes: []coord{},
+			owner: human,
+		},
+	}
+
+	goodOccupied := coordOccupied(coord{0, 0}, ships)
+	if !goodOccupied {
+		t.Error("coordOccupied returns a false negative")
+	}
+
+	badOccupied := coordOccupied(coord{0, 1}, ships)
+	if badOccupied {
+		t.Error("coordOccupied returns a false positive")
+	}
+}

@@ -115,3 +115,14 @@ func (f field) shoot(aim coord) (bool, *ship) {
 	}
 	return false, &ship{}
 }
+
+func coordOccupied(aim coord, ships []ship) bool {
+	for _, s := range ships {
+		for _, c := range s.spaces {
+			if c == aim {
+				return true
+			}
+		}
+	}
+	return false
+}

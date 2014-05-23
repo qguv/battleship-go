@@ -27,7 +27,6 @@ func makeShips(d dimensions, generics []ship, owner player) []ship {
 		var c coord
 		var lastc coord
 		var coords []coord
-		var dummyField field
 		var occupied bool
 	TryCoords:
 		for {
@@ -46,17 +45,14 @@ func makeShips(d dimensions, generics []ship, owner player) []ship {
 
 			// start determining the coordinates the ship in the water takes up
 			coords = make([]coord, s.length)
-			// set up a dummy field full of our own ships
-			dummyField = field{d, ships, []coord{}}
 			for i := 0; i < s.length; i++ {
 				if horizontal {
 					coords[i] = c.right(i)
-					occupied, _ = dummyField.shoot(c.right(i))
+					occupied = coordOccupied(c.right(i), ships) //FIXME: repeated call
 				} else {
 					coords[i] = c.down(i)
-					occupied, _ = dummyField.shoot(c.down(i))
+					occupied = coordOccupied(c.down(i), ships) //FIXME: repeated call
 				}
-				// if a dummy shot hits, the space is occupied
 				if occupied {
 					continue TryCoords
 				}

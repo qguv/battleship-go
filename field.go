@@ -1,5 +1,6 @@
 package main
 
+import "fmt"
 import "reflect"
 import "math/rand"
 
@@ -124,4 +125,29 @@ func coordOccupied(aim coord, ships []ship) bool {
 		}
 	}
 	return false
+}
+
+func (f field) Show() {
+	cols := f.dimensions.x
+	rows := f.dimensions.y
+	ships := f.ships
+
+	fmt.Print(" ")
+	for i := 0; i < cols; i++ {
+		fmt.Print(" ", i)
+	}
+
+	fmt.Print("\n")
+
+	for r := 0; r < rows; r++ {
+		fmt.Print(letterInPosition(r))
+		for c := 0; c < cols; c++ { // not a pun I swear
+			if coordOccupied(coord{c, r}, ships) {
+				fmt.Print(" +")
+			} else {
+				fmt.Print("  ")
+			}
+		}
+		fmt.Print("\n")
+	}
 }

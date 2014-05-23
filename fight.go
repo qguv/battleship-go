@@ -73,10 +73,15 @@ func alphabetPosition(s string) (int, error) {
 	return int(letter - first), nil
 }
 
-func move(f *field) string {
-	var userInput string
-	fmt.Scanln("%s", &userInput)
-	rawCoord := []rune(userInput)
+func letterInPosition(n int) string {
+	first := []rune("a")[0]
+	return string(first + rune(n))
+}
+
+func move(f *field) {
+	var raw []byte
+	fmt.Scanf("%s", &raw)
+	rawCoord := string(raw)
 	rowLetter := strings.ToLower(string(rawCoord[0:1]))
 	row, err := alphabetPosition(rowLetter)
 	if err != nil {
@@ -89,9 +94,9 @@ func move(f *field) string {
 	aim := coord{row, column}
 	hit, hitShip := f.shoot(aim)
 	if hit {
-		return fmt.Sprintln("you hit a", hitShip.name)
+		fmt.Println("You hit a", hitShip.name)
 	} else {
-		return "Miss!"
+		fmt.Println("Miss")
 	}
 }
 
@@ -106,7 +111,8 @@ func main() {
 	defendField := makeScatteredField(dim, genericShips, human)
 
 	for attackField.shipsLeft() && defendField.shipsLeft() {
-		// game loop
+		defendField.Show()
+		move(&attackField)
 	}
 
 	if defendField.shipsLeft() {

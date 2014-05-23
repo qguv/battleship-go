@@ -14,12 +14,6 @@ func randomBool() bool {
 	return rand.Intn(2) == 0
 }
 
-func randomCoord(d dimensions) (c coord) {
-	c.x = rand.Intn(d.x)
-	c.y = rand.Intn(d.y)
-	return
-}
-
 func makeShips(d dimensions, generics []ship, owner player) []ship {
 	ships := make([]ship, len(generics))
 	for shipI, s := range generics {
@@ -30,7 +24,7 @@ func makeShips(d dimensions, generics []ship, owner player) []ship {
 		var occupied bool
 	TryCoords:
 		for {
-			c = randomCoord(d)
+			c = d.randomCoord()
 			horizontal = randomBool()
 
 			if horizontal {

@@ -1,6 +1,7 @@
 package main
 
 import "reflect"
+import "math/rand"
 
 // coord and dimensions both contain x and y fields, but these fields have different meaning in each type and therefore the methods they avail are distinct.
 type coord struct{ x, y int }
@@ -28,6 +29,12 @@ func (c0 coord) area(c1 coord) int {
 
 func (d dimensions) area() int {
 	return d.x * d.y
+}
+
+func (d dimensions) randomCoord() (c coord) {
+	c.x = rand.Intn(d.x)
+	c.y = rand.Intn(d.y)
+	return
 }
 
 // coord.within returns true if a coordinate is within the dimensions specified, starting at the origin.

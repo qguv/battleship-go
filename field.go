@@ -16,24 +16,29 @@ func (from coord) dimensions(to coord) dimensions {
 	return dimensions{x, y}
 }
 
+// returns the coordinate with an y-value increased by the amount specified
 func (c coord) down(y1 int) coord {
 	y0 := c.y
 	return coord{c.x, y0 + y1}
 }
 
+// returns the coordinate with an x-value increased by the amount specified
 func (c coord) right(x1 int) coord {
 	x0 := c.x
 	return coord{x0 + x1, c.y}
 }
 
+// returns the area between two coords
 func (c0 coord) area(c1 coord) int {
 	return c0.dimensions(c1).area()
 }
 
+// returns the area contained in a dimension field
 func (d dimensions) area() int {
 	return d.x * d.y
 }
 
+// returns an arbitrary coordinate within the specified dimensions
 func (d dimensions) randomCoord() (c coord) {
 	c.x = rand.Intn(d.x)
 	c.y = rand.Intn(d.y)
@@ -62,6 +67,7 @@ const (
 	everybody
 )
 
+// returns the player name as a string
 func (p player) String() (s string) {
 	switch p {
 	case nobody:
@@ -84,6 +90,7 @@ type ship struct {
 	owner  player
 }
 
+// tests whether a ship has been fatally shot
 func (s ship) isDestroyed() bool {
 	return reflect.DeepEqual(s.spaces, s.holes)
 }
@@ -94,6 +101,7 @@ type field struct {
 	misses     []coord
 }
 
+// returns whether there are any remaining ships which aren't destroyed
 func (f field) shipsLeft() bool {
 	for _, s := range f.ships {
 		if !s.isDestroyed() {
@@ -103,10 +111,13 @@ func (f field) shipsLeft() bool {
 	return false
 }
 
+// tests whether a coord is a valid coordinate in a field
 func (c coord) on(f field) bool {
 	return c.within(f.dimensions)
 }
 
+// Shoot at a coordinate. If a ship is located at the coordinate, mutate the
+// ship to indicate its damage and return the address of the hit ship.
 func (f field) shoot(aim coord) (bool, *ship) {
 	for _, s := range f.ships {
 		for _, c := range s.spaces {

@@ -9,11 +9,17 @@ import (
 	"time"
 )
 
+// returns true if she loves me, false if she loves me not
 func randomBool() bool {
 	// Intn returns [0,n)
 	return rand.Intn(2) == 0
 }
 
+/*
+makes a new field with ships pseudo-randomly dispersed in the dumbest way
+possible
+TODO: needs serious work
+*/
 func makeScatteredField(d dimensions, generics []ship, owner player) field {
 	ships := make([]ship, len(generics))
 	for shipI, s := range generics {
@@ -66,6 +72,8 @@ func makeScatteredField(d dimensions, generics []ship, owner player) field {
 	}
 }
 
+// given an int, returns the alphabet letter associated with this number
+// 'a': 0, 'b': 1, 'c': 2, ... 'y': 24, 'z': 25
 func alphabetPosition(s string) (int, error) {
 	letter := []rune(s)[0]
 	first := []rune("a")[0]
@@ -75,11 +83,15 @@ func alphabetPosition(s string) (int, error) {
 	return int(letter - first), nil
 }
 
+// given an int, returns the alphabet letter associated with this number
+// 0: 'a', 1: 'b', 2: 'c', ... 24: 'y', 25: 'z'
 func letterInPosition(n int) string {
 	first := []rune("a")[0]
 	return string(first + rune(n))
 }
 
+// a high-level wrapper to prompt the user for a move and call shoot() on a
+// field
 func move(f *field) {
 	var raw []byte
 	fmt.Scanf("%s", &raw)

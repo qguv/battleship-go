@@ -1,8 +1,11 @@
 package main
 
-import "fmt"
-import "reflect"
-import "math/rand"
+import (
+	"fmt"
+	"reflect"
+	"math/rand"
+	"strconv"
+)
 
 // coord and dimensions both contain x and y fields, but these fields have
 // different meaning in each type and therefore the methods they avail are
@@ -139,6 +142,32 @@ func coordOccupied(aim coord, ships []ship) bool {
 		}
 	}
 	return false
+}
+
+func (f field) rows() []rune {
+	rows := f.dimensions.y
+	labels := make([]rune, rows)
+
+	for r := 0; r < rows; r++ {
+		// indexes first (and only) element of string to give a rune
+		charrune := rune(letterInPosition(r)[0])
+		labels[r] = charrune
+	}
+
+	return labels
+}
+
+func (f field) cols() []rune {
+	cols := f.dimensions.x
+	labels := make([]rune, cols)
+
+	for c := 0; c < cols; c++ { // not a pun I swear
+		// indexes first (and only) element of string to give a rune
+		numrune := rune(strconv.Itoa(c)[0])
+		labels[c] = numrune
+	}
+
+	return labels
 }
 
 func (f field) Show() {

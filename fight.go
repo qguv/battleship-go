@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	termbox "github.com/nsf/termbox-go"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -116,6 +117,9 @@ func move(f *field) {
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+
+	termbox.Init()
+	defer termbox.Close()
 
 	dim := dimensions{10, 10}
 

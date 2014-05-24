@@ -254,3 +254,34 @@ func TestOccupied(t *testing.T) {
 		t.Error("coordOccupied returns a false positive")
 	}
 }
+
+func TestLabels(t *testing.T) {
+	var misses []coord
+	var ships []ship
+	f := field{
+		dimensions: dimensions{10, 10},
+		misses:     misses,
+		ships:      ships,
+	}
+
+	expected := make([]rune, 10)
+	observed := make([]rune, 10)
+
+	expected = []rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'}
+	observed = f.rows()
+	for i, e := range expected {
+		if observed[i] != e {
+			t.Error("rows method on field gives wrong row headers")
+			break
+		}
+	}
+
+	expected = []rune{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+	observed = f.cols()
+	for i, e := range expected {
+		if observed[i] != e {
+			t.Error("cols method on field gives wrong column headers")
+			break
+		}
+	}
+}

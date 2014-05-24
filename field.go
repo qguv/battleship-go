@@ -4,7 +4,9 @@ import "fmt"
 import "reflect"
 import "math/rand"
 
-// coord and dimensions both contain x and y fields, but these fields have different meaning in each type and therefore the methods they avail are distinct.
+// coord and dimensions both contain x and y fields, but these fields have
+// different meaning in each type and therefore the methods they avail are
+// distinct.
 type coord struct{ x, y int }
 type dimensions struct{ x, y int }
 
@@ -38,7 +40,8 @@ func (d dimensions) randomCoord() (c coord) {
 	return
 }
 
-// coord.within returns true if a coordinate is within the dimensions specified, starting at the origin.
+// coord.within returns true if a coordinate is within the dimensions
+// specified, starting at the origin.
 func (c coord) within(d dimensions) bool {
 	if c.x < 0 || c.y < 0 {
 		return false

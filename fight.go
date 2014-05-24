@@ -42,10 +42,12 @@ func makeScatteredField(d dimensions, generics []ship, owner player) field {
 			for i := 0; i < s.length; i++ {
 				if horizontal {
 					coords[i] = c.right(i)
-					occupied = coordOccupied(c.right(i), ships) //FIXME: repeated call
+					// FIXME: repeated call
+					occupied = coordOccupied(c.right(i), ships)
 				} else {
 					coords[i] = c.down(i)
-					occupied = coordOccupied(c.down(i), ships) //FIXME: repeated call
+					// FIXME: repeated call
+					occupied = coordOccupied(c.down(i), ships)
 				}
 				if occupied {
 					continue TryCoords
@@ -105,10 +107,10 @@ func main() {
 
 	dim := dimensions{10, 10}
 
-	genericShips := canonicalBattleship()
+	ships := canonicalBattleship()
 
-	attackField := makeScatteredField(dim, genericShips, adversary)
-	defendField := makeScatteredField(dim, genericShips, human)
+	attackField := makeScatteredField(dim, ships, adversary)
+	defendField := makeScatteredField(dim, ships, human)
 
 	for attackField.shipsLeft() && defendField.shipsLeft() {
 		defendField.Show()

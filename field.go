@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"reflect"
+	"errors"
 	"math/rand"
+	"reflect"
 	"strconv"
 )
 
@@ -144,6 +144,69 @@ func coordOccupied(aim coord, ships []ship) bool {
 	return false
 }
 
+// status is an enumerated type indicating status of specific ship coordinates
+type status uint8
+
+const (
+	unknown status = iota
+	miss
+	hit
+	empty
+	occupied
+)
+
+// If the ship isn't here, return miss.
+// If the ship is here, return occupied or hit depending on whether already
+// damaged.
+func (s ship) statusAt(aim coord) status {
+	for _, c := range s.spaces {
+		if c == aim {
+			// either a hit or just a ship here
+			for _, h := range s.holes {
+				if aim == h {
+					return hit
+				}
+			}
+			return occupied
+		}
+	}
+	return miss
+}
+
+func (f field) statusAt(aim coord) status {
+	// if it's a known miss, show that
+	for _, c := range f.misses {
+		if c == aim {
+			return miss
+		}
+	}
+	var shipOwner player
+	for _, s := range f.ships {
+		shipOwner = s.owner
+		shipStatus := s.statusAt(aim)
+		if shipStatus == miss {
+			continue
+		}
+		// here, it's a ship
+		if shipOwner == human {
+			// if it's ours, we can say precisely what's here
+			return shipStatus // hit or occupied
+		} else {
+			if shipStatus == occupied {
+				// if it's not ours, we shouldn't know this
+				return unknown
+			}
+		}
+	}
+	// here, there is no data for the coordinate
+	if shipOwner == human {
+		// if it's our field, we know it's empty
+		return empty
+	}
+	// if it's not our field, we don't know
+	return unknown
+}
+
 func (f field) rows() []rune {
 	rows := f.dimensions.y
 	labels := make([]rune, rows)
@@ -160,37 +223,26 @@ func (f field) rows() []rune {
 func (f field) cols() []rune {
 	cols := f.dimensions.x
 	labels := make([]rune, cols)
+	over10 := []rune{'⒑', '⒒', '⒓', '⒔', '⒕', '⒖', '⒗', '⒘', '⒙', '⒚', '⒛'}
 
-	for c := 0; c < cols; c++ { // not a pun I swear
+	for c := 1; c <= cols; c++ { // not a pun I swear
 		// indexes first (and only) element of string to give a rune
-		numrune := rune(strconv.Itoa(c)[0])
-		labels[c] = numrune
+		if c < 10 {
+			numrune := rune(strconv.Itoa(c)[0])
+			labels[c-1] = numrune
+		} else if c <= 20 {
+			labels[c-1] = over10[c-10]
+		} else {
+			panic(errors.New("not enough monospace numbers to represent dimensions"))
+		}
 	}
 
 	return labels
 }
 
-func (f field) Show() {
-	cols := f.dimensions.x
-	rows := f.dimensions.y
-	ships := f.ships
-
-	fmt.Print(" ")
-	for i := 0; i < cols; i++ {
-		fmt.Print(" ", i)
-	}
-
-	fmt.Print("\n")
-
-	for r := 0; r < rows; r++ {
-		fmt.Print(letterInPosition(r))
-		for c := 0; c < cols; c++ { // not a pun I swear
-			if coordOccupied(coord{c, r}, ships) {
-				fmt.Print(" +")
-			} else {
-				fmt.Print("  ")
-			}
-		}
-		fmt.Print("\n")
-	}
+// This function tells us where in termbox a coordinate would be represented.
+func (theoretical coord) viewPos(origin coord) (actual coord) {
+	actual.x = origin.x + theoretical.x*2 + 4
+	actual.y = origin.y + theoretical.y + 2
+	return
 }

@@ -231,6 +231,31 @@ func TestShoot(t *testing.T) {
 	}
 }
 
+func TestStatusAt(t *testing.T) {
+	s := ship{
+		name:   "Tyrone",
+		length: 3,
+		spaces: []coord{
+			coord{0, 0},
+			coord{1, 0},
+			coord{2, 0},
+		},
+		holes: []coord{
+			coord{0, 0},
+			coord{1, 0},
+		},
+	}
+	if s.statusAt(coord{0, 0}) != hit {
+		t.Error("statusAt method on ship returned incorrect status for a hit coordinate")
+	}
+	if s.statusAt(coord{2, 0}) != occupied {
+		t.Error("statusAt method on ship returned incorrect status for a non-hit coordinate")
+	}
+	if s.statusAt(coord{2, 1}) != miss {
+		t.Error("statusAt method on ship returned incorrect status for an irrelevant coordinate")
+	}
+}
+
 func TestOccupied(t *testing.T) {
 	ships := []ship{
 		ship{
@@ -276,12 +301,53 @@ func TestLabels(t *testing.T) {
 		}
 	}
 
-	expected = []rune{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+	expected = []rune{'1', '2', '3', '4', '5', '6', '7', '8', '9', '⒑'}
 	observed = f.cols()
 	for i, e := range expected {
 		if observed[i] != e {
-			t.Error("cols method on field gives wrong column headers")
+			t.Errorf("cols method on field gives wrong column headers: %v", string(f.cols()))
 			break
 		}
 	}
+}
+
+func TestViewPos(t *testing.T) {
+	var theoretical, expected, observed, origin coord
+
+	theoretical = coord{0, 0}
+	expected = coord{4, 2}
+	observed = theoretical.viewPos(origin)
+	if observed != expected {
+		t.Error("viewPos method on origin doesn't return correct view coordinate")
+	}
+
+	theoretical = coord{3, 3}
+	expected = coord{10, 5}
+	observed = theoretical.viewPos(origin)
+	if observed != expected {
+		t.Error("viewPos method on significant coord doesn't return correct view coordinate")
+	}
+
+	theoretical = coord{-1, 0}
+	expected = coord{2, 2}
+	observed = theoretical.viewPos(origin)
+	if observed != expected {
+		t.Error("viewPos method on negative x coord doesn't return correct view coordinate")
+	}
+
+	theoretical = coord{0, -1}
+	expected = coord{4, 1}
+	observed = theoretical.viewPos(origin)
+	if observed != expected {
+		t.Error("viewPos method on negative y coord doesn't return correct view coordinate")
+	}
+
+	origin = coord{4, 4}
+	theoretical = coord{3, 3}
+	expected = coord{14, 9}
+	observed = theoretical.viewPos(origin)
+	if observed != expected {
+		t.Error("viewPos method on significant coord with abnormal origin doesn't return correct view coordinate")
+	}
+
 }

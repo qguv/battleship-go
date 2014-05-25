@@ -115,21 +115,84 @@ func move(f *field) {
 	}
 }
 
+func buildLabels(f field, origin coord) {
+	var labelOrigin coord
+
+	// column headers
+	labelOrigin.x = origin.x + 2
+	labelOrigin.y = origin.y
+	for i, symbol := range f.cols() {
+		theoretical := coord{i, 0}
+		actual := theoretical.viewPos(labelOrigin)
+		termbox.SetCell(actual.x, actual.y, symbol, termbox.ColorMagenta, termbox.ColorBlack)
+	}
+
+	// row headers
+	labelOrigin.x = origin.x
+	labelOrigin.y = origin.y + 1
+	for i, symbol := range f.rows() {
+		theoretical := coord{0, i}
+		actual := theoretical.viewPos(labelOrigin)
+		termbox.SetCell(actual.x, actual.y, symbol, termbox.ColorMagenta, termbox.ColorBlack)
+	}
+}
+
+func buildInnerField(f field, origin coord) {
+	var symbol rune
+	fg := termbox.ColorWhite
+	bg := termbox.ColorBlack
+
+	for y := 0; y < f.dimensions.y; y++ {
+		for x := 0; x < f.dimensions.x; x++ {
+			theoretical := coord{x, y}
+			statusHere := f.statusAt(theoretical)
+
+			switch statusHere {
+			case unknown:
+				symbol = ' '
+			case empty:
+				symbol = '~'
+				fg = termbox.ColorCyan
+			case hit:
+				symbol = '#'
+				fg = termbox.ColorRed
+			case miss:
+				symbol = '•'
+				fg = termbox.ColorGreen
+			case occupied:
+				symbol = 'O'
+			}
+
+			actual := theoretical.viewPos(origin)
+			termbox.SetCell(actual.x, actual.y, symbol, fg, bg)
+		}
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
-
-	termbox.Init()
-	defer termbox.Close()
 
 	dim := dimensions{10, 10}
 
 	ships := canonicalBattleship()
 
 	attackField := makeScatteredField(dim, ships, adversary)
+	attackOrigin := coord{0, 0}
 	defendField := makeScatteredField(dim, ships, human)
+	defendOrigin := coord{30, 0}
 
+	termbox.Init()
+	defer termbox.Close()
+	termbox.HideCursor()
+
+	buildLabels(attackField, attackOrigin)
+	buildLabels(defendField, defendOrigin)
+
+	// game loop
 	for attackField.shipsLeft() && defendField.shipsLeft() {
-		defendField.Show()
+		buildInnerField(attackField, attackOrigin)
+		buildInnerField(defendField, defendOrigin)
+		termbox.Flush()
 		move(&attackField)
 	}
 

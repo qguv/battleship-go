@@ -93,7 +93,7 @@ func letterInPosition(n int) string {
 
 // a high-level wrapper to prompt the user for a move and call shoot() on a
 // field
-func move(f *field) {
+func move(f *field) string {
 	var raw []byte
 	fmt.Scanf("%s", &raw)
 	rawCoord := string(raw)
@@ -107,11 +107,11 @@ func move(f *field) {
 		panic(err)
 	}
 	aim := coord{row, column}
-	hit, hitShip := f.shoot(aim)
+	hit, hitShip := (&f).shoot(aim)
 	if hit {
-		fmt.Println("You hit a", hitShip.name)
+		return fmt.Sprintln("You hit a", hitShip.name)
 	} else {
-		fmt.Println("Miss")
+		return fmt.Sprintln("Miss")
 	}
 }
 
@@ -119,8 +119,8 @@ func buildLabels(f field, origin coord) {
 	var labelOrigin coord
 
 	// column headers
-	labelOrigin.x = origin.x + 2
-	labelOrigin.y = origin.y
+	labelOrigin.x = origin.x
+	labelOrigin.y = origin.y - 1
 	for i, symbol := range f.cols() {
 		theoretical := coord{i, 0}
 		actual := theoretical.viewPos(labelOrigin)
@@ -128,8 +128,8 @@ func buildLabels(f field, origin coord) {
 	}
 
 	// row headers
-	labelOrigin.x = origin.x
-	labelOrigin.y = origin.y + 1
+	labelOrigin.x = origin.x - 2
+	labelOrigin.y = origin.y
 	for i, symbol := range f.rows() {
 		theoretical := coord{0, i}
 		actual := theoretical.viewPos(labelOrigin)
@@ -153,20 +153,56 @@ func buildInnerField(f field, origin coord) {
 			case empty:
 				symbol = '~'
 				fg = termbox.ColorCyan
-			case hit:
-				symbol = '#'
-				fg = termbox.ColorRed
 			case miss:
-				symbol = '•'
+				symbol = '~'
 				fg = termbox.ColorGreen
+			case hit:
+				symbol = '▓'
+				fg = termbox.ColorRed
 			case occupied:
-				symbol = 'O'
+				symbol = '█'
 			}
 
 			actual := theoretical.viewPos(origin)
 			termbox.SetCell(actual.x, actual.y, symbol, fg, bg)
 		}
 	}
+}
+
+
+func counterMove(f *field) string {
+	var aim coord
+	for {
+		aim = f.dimensions.randomCoord()
+		for _, c := range f.misses {
+			if c == aim {
+				continue
+			}
+		}
+		for _, s := range f.ships {
+			if s.statusAt(aim) == hit {
+				continue
+			}
+		}
+		hit, hitShip := (&f).shoot(aim)
+		if hit {
+			var destroyed string
+			punctuation := "."
+			if hitShip.isDestroyed() {
+				destroyed = " and destroyed"
+				punctuation = "!"
+			}
+			return fmt.Sprintf("Adversary hit%v your %v%v", destroyed, hitShip.name, punctuation)
+		}
+	}
+}
+
+func tbprint(origin coord, msg string, fg, bg termbox.Attribute) coord {
+	for _, r := range msg {
+		termbox.SetCell(origin.x, origin.y, r, fg, bg)
+		origin = origin.right(1)
+	}
+	return origin
 }
 
 func main() {
@@ -181,19 +217,28 @@ func main() {
 	defendField := makeScatteredField(dim, ships, human)
 	defendOrigin := coord{30, 0}
 
+	printOrigin := coord{0, 30}
+
 	termbox.Init()
 	defer termbox.Close()
 	termbox.HideCursor()
+	termbox.Clear(termbox.ColorBlack, termbox.ColorBlack)
 
 	buildLabels(attackField, attackOrigin)
 	buildLabels(defendField, defendOrigin)
 
 	// game loop
+	var msg_us, msg_them string
 	for attackField.shipsLeft() && defendField.shipsLeft() {
 		buildInnerField(attackField, attackOrigin)
 		buildInnerField(defendField, defendOrigin)
 		termbox.Flush()
-		move(&attackField)
+		msg_us = move(&attackField)
+		termbox.Flush()
+		msg_them = counterMove(&defendField)
+		tbprint(printOrigin, msg_us, termbox.ColorWhite, termbox.ColorBlack)
+		tbprint(printOrigin.down(1), msg_them, termbox.ColorWhite, termbox.ColorBlack)
+		termbox.Flush()
 	}
 
 	if defendField.shipsLeft() {

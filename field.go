@@ -121,7 +121,7 @@ func (c coord) on(f field) bool {
 
 // Shoot at a coordinate. If a ship is located at the coordinate, mutate the
 // ship to indicate its damage and return the address of the hit ship.
-func (f field) shoot(aim coord) (bool, *ship) {
+func (f *field) shoot(aim coord) (bool, *ship) {
 	for _, s := range f.ships {
 		for _, c := range s.spaces {
 			if c == aim {

@@ -212,9 +212,12 @@ func (f field) rows() []rune {
 	labels := make([]rune, rows)
 
 	for r := 0; r < rows; r++ {
+		character, err := letterInPosition(r)
+		if err != nil {
+			panic(err)
+		}
 		// indexes first (and only) element of string to give a rune
-		charrune := rune(letterInPosition(r)[0])
-		labels[r] = charrune
+		labels[r] = rune(character[0])
 	}
 
 	return labels

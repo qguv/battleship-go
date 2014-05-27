@@ -1,6 +1,7 @@
 package main
 
 import (
+	"code.google.com/p/go.text/unicode/norm"
 	"errors"
 	"fmt"
 	termbox "github.com/nsf/termbox-go"
@@ -8,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // returns true if she loves me, false if she loves me not
@@ -78,7 +80,7 @@ func makeScatteredField(d dimensions, generics []ship, owner player) field {
 func alphabetPosition(s string) (int, error) {
 	letter := []rune(s)[0]
 	first := []rune("a")[0]
-	if letter < first {
+	if letter < first || letter > 25 {
 		return 0, errors.New("column (lettered index) out of range!")
 	}
 	return int(letter - first), nil
@@ -86,33 +88,12 @@ func alphabetPosition(s string) (int, error) {
 
 // given an int, returns the alphabet letter associated with this number
 // 0: 'a', 1: 'b', 2: 'c', ... 24: 'y', 25: 'z'
-func letterInPosition(n int) string {
+func letterInPosition(n int) (string, error) {
+	if n < 0 || n > 25 {
+		return "", errors.New("column (lettered index) out of range!")
+	}
 	first := []rune("a")[0]
-	return string(first + rune(n))
-}
-
-// a high-level wrapper to prompt the user for a move and call shoot() on a
-// field
-func move(f *field) string {
-	var raw []byte
-	fmt.Scanf("%s", &raw)
-	rawCoord := string(raw)
-	rowLetter := strings.ToLower(string(rawCoord[0:1]))
-	row, err := alphabetPosition(rowLetter)
-	if err != nil {
-		panic(err)
-	}
-	column, err := strconv.Atoi(string(rawCoord[1:]))
-	if err != nil {
-		panic(err)
-	}
-	aim := coord{row, column}
-	hit, hitShip := (&f).shoot(aim)
-	if hit {
-		return fmt.Sprintln("You hit a", hitShip.name)
-	} else {
-		return fmt.Sprintln("Miss")
-	}
+	return string(first + rune(n)), nil
 }
 
 func buildLabels(f field, origin coord) {
@@ -169,7 +150,6 @@ func buildInnerField(f field, origin coord) {
 	}
 }
 
-
 func counterMove(f *field) string {
 	var aim coord
 	for {
@@ -198,17 +178,58 @@ func counterMove(f *field) string {
 }
 
 func tbprint(origin coord, msg string, fg, bg termbox.Attribute) coord {
+	x, y := termbox.Size()
+	dims := dimensions{x, y}
+
 	for _, r := range msg {
+		// display message
 		termbox.SetCell(origin.x, origin.y, r, fg, bg)
 		origin = origin.right(1)
 	}
-	return origin
+	nextFreeCoord := origin.right(1)
+
+	for origin.within(dims) {
+		// wipe out last message fragments
+		termbox.SetCell(origin.x, origin.y, ' ', bg, bg)
+		origin = origin.right(1)
+	}
+
+	return nextFreeCoord
+}
+
+func displayBacklog(ch chan string, printOrigin coord) coord {
+	fg := termbox.ColorWhite
+	bg := termbox.ColorBlack
+
+	// first value, saving its next free space
+	msg := <-ch
+	nextFreeCoord := tbprint(printOrigin, msg, fg, bg)
+
+	for s := range ch {
+		printOrigin = printOrigin.down(1)
+		tbprint(printOrigin, s, fg, bg)
+	}
+	return nextFreeCoord
 }
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	dim := dimensions{10, 10}
+
+	// making string of valid runes for user input
+	var valid_raw []rune
+	for i := 0; i < dim.y; i++ {
+		s, err := letterInPosition(i)
+		r := rune(s[0])
+		valid_raw = append(valid_raw, r)
+	}
+	for i := 0; i < dim.x; i++ {
+		s := strconv.Itoa(i + 1)
+		r := rune(s[0])
+		valid_raw = append(valid_raw, r)
+	}
+	valid := string(valid_raw)
 
 	ships := canonicalBattleship()
 
@@ -218,6 +239,8 @@ func main() {
 	defendOrigin := coord{30, 0}
 
 	printOrigin := coord{0, 30}
+	printback := make(chan string, 3)
+	defer close(printback)
 
 	termbox.Init()
 	defer termbox.Close()
@@ -230,15 +253,76 @@ func main() {
 	// game loop
 	var msg_us, msg_them string
 	for attackField.shipsLeft() && defendField.shipsLeft() {
+
+		// enemy moves
+		printback <- counterMove(&defendField)
+
+		// we're prompted for a move
+		printback <- "Move? "
+
+		// build the display
 		buildInnerField(attackField, attackOrigin)
 		buildInnerField(defendField, defendOrigin)
+		nextFreeCoord := displayBacklog(printback, printOrigin)
 		termbox.Flush()
-		msg_us = move(&attackField)
-		termbox.Flush()
-		msg_them = counterMove(&defendField)
+
+		// starting where we left off in "Move? "
+		var row, column int
+		for {
+			var raw []rune
+			for {
+				e := termbox.PollEvent()
+				if e.Type != termbox.EventKey {
+					continue
+				}
+				if e.Key == termbox.KeyCtrlC {
+					panic(nil)
+				}
+				if e.Key == termbox.KeyEnter {
+					break
+				}
+				r := e.Ch
+				r = unicode.ToLower(r)
+				if !strings.Contains(valid, string(r)) {
+					continue
+				}
+				raw = append(raw, r)
+				tbprint(nextFreeCoord, string(r), termbox.ColorWhite, termbox.ColorBlack)
+				termbox.Flush()
+			}
+			rawCoord := string(raw)
+			rowLetter := string(rawCoord[0])
+			row, err := alphabetPosition(rowLetter)
+			if err != nil {
+				panic(err)
+			}
+			colStringHeader := string(rawCoord[1:])
+			column_raw, err := strconv.Atoi(colStringHeader)
+			var column int
+			if err != nil {
+				// it's one of our special forms
+				// thankfully, it decays (NFKD) to r'[0-9]*\.'
+				rawCol_bytes := norm.NFKD.Bytes([]byte(colStringHeader))
+				rawCol := []rune(string(rawCol_bytes))
+				rawCol = rawCol[:len(rawCol)-1] // all but final fullstop
+				column, err := strconv.Atoi(string(rawCol))
+				if err != nil {
+					// something else went terribly wrong
+					continue
+				}
+			} else {
+				column := column_raw
+			}
+			column = column - 1 // they 1-index; we 0-index
+		}
+		aim := coord{row, column}
+		hit, hitShip := (&attackField).shoot(aim)
+		if hit {
+			msg_us = fmt.Sprintln("You hit a", hitShip.name)
+		} else {
+			msg_us = fmt.Sprintln("Miss")
+		}
 		tbprint(printOrigin, msg_us, termbox.ColorWhite, termbox.ColorBlack)
-		tbprint(printOrigin.down(1), msg_them, termbox.ColorWhite, termbox.ColorBlack)
-		termbox.Flush()
 	}
 
 	if defendField.shipsLeft() {

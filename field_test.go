@@ -147,6 +147,7 @@ func TestShipsLeft(t *testing.T) {
 	allDestroyed := field{
 		dimensions: dimensions{2, 2},
 		misses:     []coord{},
+		owner:      adversary,
 		ships: []ship{
 			ship{
 				name:   "Baddie",
@@ -198,20 +199,20 @@ func TestShoot(t *testing.T) {
 			owner: adversary,
 		},
 		ship{
-			name:   "Our Sailboat",
+			name:   "The Wrong Sailboat",
 			length: 1,
 			spaces: []coord{
 				coord{1, 2},
 			},
 			holes: []coord{},
-			owner: human,
+			owner: adversary,
 		},
 	}
-	var misses []coord
 	f := field{
 		dimensions: dims,
-		misses:     misses,
+		misses:     []coord{},
 		ships:      ships,
+		owner:      nobody,
 	}
 
 	badHit, _ := f.shoot(coord{0, 1})
@@ -281,12 +282,11 @@ func TestOccupied(t *testing.T) {
 }
 
 func TestLabels(t *testing.T) {
-	var misses []coord
-	var ships []ship
 	f := field{
 		dimensions: dimensions{10, 10},
-		misses:     misses,
-		ships:      ships,
+		misses:     []coord{},
+		ships:      []ship{},
+		owner:      nobody,
 	}
 
 	expected := make([]rune, 10)

@@ -102,6 +102,7 @@ type field struct {
 	dimensions dimensions
 	ships      []ship
 	misses     []coord
+	owner      player
 }
 
 // returns whether there are any remaining ships which aren't destroyed
@@ -184,25 +185,34 @@ func (f field) statusAt(aim coord) status {
 	for _, s := range f.ships {
 		shipOwner = s.owner
 		shipStatus := s.statusAt(aim)
+
+		// nothing to see--we move on to the next ship or execute the bit after
+		// the loop
 		if shipStatus == miss {
 			continue
 		}
-		// here, it's a ship
-		if shipOwner == human {
-			// if it's ours, we can say precisely what's here
-			return shipStatus // hit or occupied
+
+		// we know about our own field, and everyone knows about hits
+		if shipOwner == human || shipStatus == hit {
+			return shipStatus
+
+			// since empty spaces are taken care of with continue, the only
+			// possibility is that it's occupied, and we shouldn't know that
+		} else if shipStatus == occupied {
+			return unknown
+
+			// if I've made a logical error or overlooked a case...
 		} else {
-			if shipStatus == occupied {
-				// if it's not ours, we shouldn't know this
-				return unknown
-			}
+			errors.New("don't know what happened here... check the logic in field.statusAt")
 		}
 	}
+
 	// here, there is no data for the coordinate
-	if shipOwner == human {
+	if f.owner == human {
 		// if it's our field, we know it's empty
 		return empty
 	}
+
 	// if it's not our field, we don't know
 	return unknown
 }

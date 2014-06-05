@@ -72,6 +72,7 @@ func makeScatteredField(d dimensions, generics []ship, owner player) field {
 		dimensions: d,
 		ships:      ships,
 		misses:     []coord{},
+		owner:      owner,
 	}
 }
 

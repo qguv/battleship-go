@@ -123,11 +123,13 @@ func (c coord) on(f field) bool {
 // Shoot at a coordinate. If a ship is located at the coordinate, mutate the
 // ship to indicate its damage and return the address of the hit ship.
 func (f *field) shoot(aim coord) (bool, *ship) {
-	for _, s := range f.ships {
+	l := len(f.ships)
+	for i := 0; i < l; i++ {
+		s := &(f.ships[i])
 		for _, c := range s.spaces {
 			if c == aim {
 				s.holes = append(s.holes, aim)
-				return true, &s
+				return true, s // TODO: maybe that's not a pointer after all ?!?!?!?!!!?!?!1111!one
 			}
 		}
 	}

@@ -232,7 +232,7 @@ func main() {
 	}
 	valid := string(valid_raw)
 
-	ships := canonicalBattleship()
+	ships := canonicalBattleships()
 
 	attackField := makeScatteredField(dim, ships, adversary)
 	attackOrigin := coord{0, 0}

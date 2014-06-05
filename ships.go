@@ -1,6 +1,6 @@
 package main
 
-func canonicalBattleship() []ship {
+func canonicalBattleships() []ship {
 	return []ship{
 		ship{
 			name:   "Aircraft Carrier",
